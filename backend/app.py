@@ -7,7 +7,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+# Get the absolute path to this directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'), static_folder=os.path.join(BASE_DIR, 'static'))
 
 # Initialiser le client Supabase
 supabase_url = os.getenv('SUPABASE_URL')
@@ -28,7 +31,8 @@ def load_products():
     
     # Fallback: charger depuis JSON
     try:
-        with open('products.json', 'r', encoding='utf-8') as f:
+        products_file = os.path.join(BASE_DIR, 'products.json')
+        with open(products_file, 'r', encoding='utf-8') as f:
             products = json.load(f)
             # Charger dans Supabase si vide
             if not supabase.table('products').select('*').execute().data:
