@@ -15,36 +15,54 @@ app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'), stati
 # Initialiser le client Supabase
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
-supabase: Client = create_client(supabase_url, supabase_key)
+supabase = None
+if supabase_url and supabase_key:
+    try:
+        supabase: Client = create_client(supabase_url, supabase_key)
+    except Exception as e:
+        print(f"Erreur initialisation Supabase: {e}")
+        supabase = None
+else:
+    print("Supabase credentials not set; running in fallback mode")
 
 # Charger les produits depuis Supabase ou JSON (fallback)
 def load_products():
     try:
-        # Essayer de charger depuis Supabase
-        response = supabase.table('products').select('*').execute()
-        if response.data:
-            return response.data
+        # Essayer de charger depuis Supabase si initialisé
+        if supabase is not None:
+            try:
+                response = supabase.table('products').select('*').execute()
+                if response and getattr(response, 'data', None):
+                    return response.data
+            except Exception as e:
+                print(f"Erreur Supabase (select): {e}")
+        # sinon on continue vers le fallback JSON
     except Exception as e:
-        print(f"Erreur Supabase: {e}")
-        # Fallback: charger depuis JSON
-        pass
+        print(f"Erreur inattendue lors de l'accès à Supabase: {e}")
     
     # Fallback: charger depuis JSON
     try:
         products_file = os.path.join(BASE_DIR, 'products.json')
         with open(products_file, 'r', encoding='utf-8') as f:
             products = json.load(f)
-            # Charger dans Supabase si vide
-            if not supabase.table('products').select('*').execute().data:
-                for product in products:
-                    supabase.table('products').insert({
-                        'id': product['id'],
-                        'name': product['name'],
-                        'price': product['price'],
-                        'description': product['description'],
-                        'image': product['image'],
-                        'category': product['category']
-                    }).execute()
+            # Charger dans Supabase si initialisé et table vide
+            if supabase is not None:
+                try:
+                    existing = supabase.table('products').select('*').execute()
+                    if not (existing and getattr(existing, 'data', None)):
+                        for product in products:
+                            try:
+                                supabase.table('products').insert({
+                                    'name': product['name'],
+                                    'price': product['price'],
+                                    'description': product['description'],
+                                    'image': product['image'],
+                                    'category': product['category']
+                                }).execute()
+                            except Exception as ie:
+                                print(f"Erreur insertion Supabase pour {product.get('name')}: {ie}")
+                except Exception as e:
+                    print(f"Erreur lecture table Supabase: {e}")
             return products
     except:
         return []
