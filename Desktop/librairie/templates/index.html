@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Librairie Enchantée{% endblock %}
+
+{% block content %}
+<!-- Carousel avec texte attractif -->
+<section class="carousel">
+    <div class="carousel-container">
+        {% for image in carousel_images %}
+        <div class="carousel-item">
+            <img src="{{ url_for('static', filename='images/' + image.src) }}" alt="{{ image.alt }}">
+            <div class="carousel-promo">
+                <h2>{{ image.title }}</h2>
+                <p>{{ image.description }}</p>
+                <a href="{{ url_for('contact') }}" class="btn-cta">Visitez-nous</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="carousel-indicators">
+        {% for image in carousel_images %}
+        <span class="indicator {% if loop.index0 == 0 %}active{% endif %}" data-index="{{ loop.index0 }}"></span>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- À propos de nous -->
+<section class="about-section">
+    <div class="container">
+        <div class="about-content">
+            <div class="about-text">
+                <h2 class="section-title-blue">Notre histoire</h2>
+                <p>Fondée en 1995, la Librairie Enchantée est bien plus qu'une simple librairie. C'est un lieu de rencontre, d'échange et de partage autour des livres et de la culture.</p>
+                <p>Notre équipe passionnée est là pour vous conseiller et vous faire découvrir des pépites littéraires, des fournitures de qualité et du matériel artistique pour tous vos projets créatifs.</p>
+                <a href="{{ url_for('catalogue') }}" class="btn-cta">Découvrez notre boutique</a>
+            </div>
+            <div class="about-image">
+                <img src="{{ url_for('static', filename='images/boutique.jpg') }}" alt="Notre librairie">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Galerie de la librairie -->
+<section class="gallery-section">
+    <div class="container">
+        <h2 class="section-title">Notre librairie</h2>
+        <div class="gallery-grid">
+            <div class="gallery-item">
+                <img src="{{ url_for('static', filename='images/galerie1a.jpg') }}" 
+                     alt="Notre espace de lecture" 
+                     loading="lazy"
+                     width="600" 
+                     height="400">
+                <p>Notre librairie</p>
+            </div>
+            <div class="gallery-item">
+                <img src="{{ url_for('static', filename='images/galerie2.jpg') }}" 
+                     alt="Nos rayons de livres" 
+                     loading="lazy"
+                     width="600" 
+                     height="400">
+                <p>Nos rayons bien organisés</p>
+            </div>
+            <div class="gallery-item">
+                <img src="{{ url_for('static', filename='images/galerie3.jpg') }}" 
+                     alt="Espace de travail" 
+                     loading="lazy"
+                     width="600" 
+                     height="400">
+                <p>Un accueil chaleureux</p>
+            </div>
+            <div class="gallery-item">
+                <img src="{{ url_for('static', filename='images/galerie4.jpg') }}" 
+                     alt="Espace enfants" 
+                     loading="lazy"
+                     width="600" 
+                     height="400">
+                <p>Articles scolaires de qualité</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pourquoi nous choisir -->
+<!-- Pourquoi nous choisir -->
+<section class="why-choose-us">
+    <div class="container">
+        <h2 class="section-title">Pourquoi nous choisir ?</h2>
+        <p class="why-text">
+            Nous mettons à votre disposition une sélection variée de livres et de
+            fournitures scolaires de qualité, conformes aux programmes officiels.
+            En tant que librairie de proximité, nous privilégions le conseil,
+            l'accueil et la disponibilité des produits directement en magasin.
+        </p>
+    </div>
+</section>
+{% endblock %}

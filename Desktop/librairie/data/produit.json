@@ -1,0 +1,57 @@
+{
+    "categories": [
+        {
+            "id": "livre",
+            "nom": "Livres",
+            "icon": "📚",
+            "description": "Romans, essais, bandes dessinées et plus encore"
+        },
+        {
+            "id": "fourniture",
+            "nom": "Fournitures",
+            "icon": "✏️",
+            "description": "Cahiers, stylos, agendas et accessoires scolaires"
+        },
+        {
+            "id": "materiel_artistique",
+            "nom": "Matériel Artistique",
+            "icon": "🎨",
+            "description": "Peinture, dessin, calligraphie et loisirs créatifs"
+        }
+    ],
+    "produits": [
+        {
+            "id": 1,
+            "nom": "Le Petit Prince",
+            "categorie": "livre",
+            "prix": 12.99,
+            "description": "Un classique intemporel pour tous les âges",
+            "image": "petit-prince.jpg",
+            "disponible": true,
+            "auteur": "Antoine de Saint-Exupéry",
+            "isbn": "978-2070404377"
+        },
+        {
+            "id": 2,
+            "nom": "Cahier Moleskine",
+            "categorie": "fourniture",
+            "prix": 18.50,
+            "description": "Cahier de qualité supérieure pour vos notes",
+            "image": "moleskine.jpg",
+            "disponible": true,
+            "format": "A5",
+            "pages": 240
+        },
+        {
+            "id": 3,
+            "nom": "Set de peinture acrylique",
+            "categorie": "materiel_artistique",
+            "prix": 29.99,
+            "description": "12 couleurs vibrantes pour vos créations",
+            "image": "peinture.jpg",
+            "disponible": true,
+            "marque": "Winsor & Newton",
+            "contenu": "12 tubes de 12ml"
+        }
+    ]
+}

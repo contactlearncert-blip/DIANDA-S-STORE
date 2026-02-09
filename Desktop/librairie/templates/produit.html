@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ produit.nom }} - Librairie Enchantée{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="container">
+        <div class="product-detail">
+            <div class="product-images">
+                <img src="{{ url_for('static', filename='images/' + produit.image) }}" alt="{{ produit.nom }}" class="main-image">
+            </div>
+            
+            <div class="product-info">
+                <h1>{{ produit.nom }}</h1>
+                <div class="product-meta">
+                    <span class="category">{{ produit.categorie|capitalize }}</span>
+                    <span class="price">{{ produit.prix }}€</span>
+                </div>
+                
+                <div class="product-description">
+                    <h3>Description</h3>
+                    <p>{{ produit.description }}</p>
+                </div>
+                
+                {% if produit.auteur %}
+                <div class="product-author">
+                    <h3>Auteur</h3>
+                    <p>{{ produit.auteur }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="product-availability">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="{% if produit.disponible %}available{% else %}unavailable{% endif %}">
+                        {% if produit.disponible %}Disponible en boutique{% else %}Bientôt disponible{% endif %}
+                    </span>
+                </div>
+                
+                <div class="product-actions">
+                    <a href="{{ url_for('contact') }}" class="btn-cta">
+                        <i class="fas fa-map-marker-alt"></i> Visitez notre boutique
+                    </a>
+                    <button class="btn-secondary wishlist-btn">
+                        <i class="far fa-heart"></i> Ajouter à la wishlist
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="related-products">
+            <h2>Produits similaires</h2>
+            <div class="products-grid">
+                {% for p in PRODUITS if p.categorie == produit.categorie and p.id != produit.id %}
+                <div class="product-card">
+                    <img src="{{ url_for('static', filename='images/' + p.image) }}" alt="{{ p.nom }}">
+                    <h3>{{ p.nom }}</h3>
+                    <p class="category">{{ p.categorie|capitalize }}</p>
+                    <p class="price">{{ p.prix }}€</p>
+                    <a href="{{ url_for('produit', produit_id=p.id) }}" class="btn-cta">En savoir plus</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

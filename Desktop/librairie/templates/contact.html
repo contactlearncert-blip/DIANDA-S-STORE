@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - Librairie Enchantée{% endblock %}
+
+{% block content %}
+<div class="contact-header">
+    <div class="container">
+        <h1>Nous contacter</h1>
+    </div>
+</div>
+
+<div class="contact-container">
+    <div class="container">
+        <div class="contact-form-section">
+            <h2>Formulaire de contact</h2>
+            <form id="contact-form" class="contact-form">
+                <div class="form-group">
+                    <label for="nom">Nom *</label>
+                    <input type="text" id="nom" name="nom" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sujet">Sujet</label>
+                    <select id="sujet" name="sujet">
+                        <option value="">Sélectionnez un sujet</option>
+                        <option value="question">Question sur un produit</option>
+                        <option value="commande">Demande de commande</option>
+                        <option value="evenement">Information sur un événement</option>
+                        <option value="autre">Autre</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Message *</label>
+                    <textarea id="message" name="message" rows="6" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-cta">
+                    <i class="fas fa-paper-plane"></i> Envoyer le message
+                </button>
+            </form>
+            
+            <div id="form-message" class="form-message"></div>
+        </div>
+        
+        <div class="contact-info">
+            <h2>Informations pratiques</h2>
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <div>
+                    <h4>Adresse</h4>
+                    <p>123 Rue des Livres<br>75001 Paris</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <div>
+                    <h4>Horaires</h4>
+                    <p><strong>Lundi - Vendredi :</strong> 9h-19h</p>
+                    <p><strong>Samedi :</strong> 10h-18h</p>
+                    <p><strong>Dimanche :</strong> Fermé</p>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <i class="fas fa-phone"></i>
+                <div>
+                    <h4>Téléphone</h4>
+                    <p>01 23 45 67 89</p>
+                </div>
+            </div>
+            
+             <div class="info-item">
+                <i class="fab fa-whatsapp"></i>
+                <div>
+                    <h4>WhatsApp</h4>
+                    <p><a href="https://wa.me/33123456789" target="_blank" class="whatsapp-link">WhatsApp</a></p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <div>
+                    <h4>Email</h4>
+                    <p>contact@librairie-enchantee.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Catalogue - Librairie Enchantée{% endblock %}
+
+{% block content %}
+<div class="catalogue-header">
+    <div class="container">
+    
+        <p>Découvrez notre sélection de produits en boutique</p>
+        <form id="search-form" class="search-bar">
+            <input type="text" id="search-input" name="recherche" placeholder="Rechercher un produit..." value="{{ recherche }}">
+            <button type="submit" id="search-btn"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+</div>
+
+<div class="catalogue-container">
+    <div class="container">
+        <div class="catalogue-main">
+            <div class="products-count">
+                <p>{{ produits|length }} produit(s) trouvé(s)</p>
+            </div>
+            
+            {% if produits %}
+            <div class="products-grid">
+                {% for produit in produits %}
+                <div class="product-card">
+                    <img src="{{ url_for('static', filename='images/' + produit.image) }}" 
+                         alt="{{ produit.nom }}" 
+                         class="product-image">
+                    <p class="product-name">{{ produit.nom }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <p>Aucun produit trouvé. Essayez une autre recherche.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
