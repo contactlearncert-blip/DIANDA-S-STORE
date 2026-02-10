@@ -13,15 +13,11 @@
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "backend/static/$1"
+      "dest": "$1" 
     },
     {
       "src": "/(.*)",
       "dest": "backend/app.py"
     }
-  ],
-  "env": {
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_ANON_KEY": "@supabase_anon_key"
-  }
+  ]
 }

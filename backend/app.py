@@ -15,9 +15,10 @@ if IS_VERCEL:
         static_folder="static",
         static_url_path="/static"
     )
-    print("Mode Vercel activé")
+    print("✅ Mode Vercel activé")
     print(f"Templates folder: {app.template_folder}")
     print(f"Static folder: {app.static_folder}")
+    print(f"Current working directory: {os.getcwd()}")
 else:
     # Configuration locale (chemins absolus)
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,7 +28,7 @@ else:
         static_folder=os.path.join(BASE_DIR, 'static'),
         static_url_path="/static"
     )
-    print("Mode local activé")
+    print("✅ Mode local activé")
     print(f"BASE_DIR: {BASE_DIR}")
     print(f"Templates folder: {app.template_folder}")
     print(f"Static folder: {app.static_folder}")
@@ -40,31 +41,31 @@ print(f"\n--- Configuration Supabase ---")
 if supabase_url:
     print(f"SUPABASE_URL: {supabase_url}")
 else:
-    print("SUPABASE_URL: NON DEFINI")
+    print("⚠️  SUPABASE_URL: NON DEFINI")
 
 if supabase_key:
     print(f"SUPABASE_ANON_KEY: {supabase_key[:10]}...")
 else:
-    print("SUPABASE_ANON_KEY: NON DEFINI")
+    print("⚠️  SUPABASE_ANON_KEY: NON DEFINI")
 
 supabase = None
 if supabase_url and supabase_key:
     try:
         supabase = create_client(supabase_url, supabase_key)
-        print("Supabase connecté avec succès")
+        print("✅ Supabase connecté avec succès")
         
         # Tester la connexion
         try:
             test_response = supabase.table('products').select('id').limit(1).execute()
             if hasattr(test_response, 'data'):
-                print(f"Test Supabase OK - {len(test_response.data)} produit(s) trouvé(s)")
+                print(f"✅ Test Supabase OK - {len(test_response.data)} produit(s) trouvé(s)")
         except Exception as test_error:
-            print(f"Attention: Connexion établie mais erreur de test: {test_error}")
+            print(f"⚠️  Attention: Connexion établie mais erreur de test: {test_error}")
     except Exception as e:
-        print(f"Erreur initialisation Supabase: {e}")
+        print(f"❌ Erreur initialisation Supabase: {e}")
         supabase = None
 else:
-    print("Supabase non configuré - Mode fallback JSON")
+    print("⚠️  Supabase non configuré - Mode fallback JSON")
 
 # Charger les produits depuis Supabase ou JSON
 def load_products():
@@ -73,12 +74,12 @@ def load_products():
         try:
             response = supabase.table('products').select('*').execute()
             if response and hasattr(response, 'data') and response.data:
-                print(f"Chargement {len(response.data)} produits depuis Supabase")
+                print(f"📦 Chargement {len(response.data)} produits depuis Supabase")
                 return response.data
             else:
-                print("Supabase: réponse vide ou invalide")
+                print("⚠️  Supabase: réponse vide ou invalide")
         except Exception as e:
-            print(f"Erreur lecture Supabase: {e}")
+            print(f"❌ Erreur lecture Supabase: {e}")
     
     # Fallback: charger depuis JSON
     try:
@@ -87,22 +88,22 @@ def load_products():
         else:
             products_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'products.json')
         
-        print(f"Fallback: chargement depuis {products_file}")
+        print(f"📁 Fallback: chargement depuis {products_file}")
         
         if not os.path.exists(products_file):
-            print(f"Fichier {products_file} non trouvé")
+            print(f"❌ Fichier {products_file} non trouvé")
             return []
         
         with open(products_file, 'r', encoding='utf-8') as f:
             products = json.load(f)
-            print(f"Chargement {len(products)} produits depuis JSON")
+            print(f"📦 Chargement {len(products)} produits depuis JSON")
             
             # Si Supabase est disponible mais vide, importer les produits JSON
             if supabase is not None:
                 try:
                     existing = supabase.table('products').select('*').execute()
                     if not (existing and hasattr(existing, 'data') and existing.data):
-                        print("Importation des produits JSON vers Supabase...")
+                        print("📤 Importation des produits JSON vers Supabase...")
                         for product in products:
                             try:
                                 supabase.table('products').insert({
@@ -113,14 +114,14 @@ def load_products():
                                     'category': product['category']
                                 }).execute()
                             except Exception as ie:
-                                print(f"Erreur insertion produit '{product.get('name')}': {ie}")
-                        print("Importation terminée")
+                                print(f"❌ Erreur insertion produit '{product.get('name')}': {ie}")
+                        print("✅ Importation terminée")
                 except Exception as e:
-                    print(f"Erreur vérification/import Supabase: {e}")
+                    print(f"❌ Erreur vérification/import Supabase: {e}")
             
             return products
     except Exception as e:
-        print(f"Erreur chargement products.json: {e}")
+        print(f"❌ Erreur chargement products.json: {e}")
         return []
 
 # Route pour la page d'accueil
@@ -190,13 +191,13 @@ def whatsapp_link():
     
     message += f"\nTotal: {total} FCFA"
     
-    # Générer l'URL WhatsApp
+    # Générer l'URL WhatsApp (CORRIGÉ: pas d'espaces)
     whatsapp_url = f"https://wa.me/{phone}?text={quote(message)}"
     
     return jsonify({'url': whatsapp_url})
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("Lancement de l'application Flask")
+    print("🚀 Lancement de l'application Flask")
     print("="*60)
     app.run(debug=True, port=5000)
