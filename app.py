@@ -1,42 +1,52 @@
 from flask import Flask, render_template, jsonify, request, url_for
 import json
 from urllib.parse import quote
-from supabase import create_client, Client
+from supabase import create_client
 import os
 
 # Détection de l'environnement Vercel
 IS_VERCEL = os.environ.get("VERCEL") is not None
 
 if IS_VERCEL:
-    # Configuration pour Vercel - chemin absolu vers le dossier templates
-    # Sur Vercel, l'application est dans /var/task/api/, donc on remonte d'un niveau
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # CORRECTION CRITIQUE : Chemin absolu correct pour Vercel
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # /var/task/api
     ROOT_DIR = os.path.dirname(BASE_DIR)  # /var/task
+    
+    # Utiliser os.path.join pour construire le chemin absolu
+    template_path = os.path.join(ROOT_DIR, 'templates')
+    static_path = os.path.join(BASE_DIR, 'static')
     
     app = Flask(
         __name__,
-        template_folder=os.path.join(ROOT_DIR, 'templates'),
-        static_folder=os.path.join(BASE_DIR, 'static'),
+        template_folder=template_path,
+        static_folder=static_path,
         static_url_path="/static"
     )
+    
     print("✅ Mode Vercel activé")
-    print(f"Templates folder: {app.template_folder}")
-    print(f"Static folder: {app.static_folder}")
-    print(f"Current working directory: {os.getcwd()}")
+    print(f"BASE_DIR: {BASE_DIR}")
     print(f"ROOT_DIR: {ROOT_DIR}")
+    print(f"Templates folder (ABSOLU): {template_path}")
+    print(f"Templates folder (exists): {os.path.exists(template_path)}")
+    print(f"Static folder (ABSOLU): {static_path}")
+    print(f"Current working directory: {os.getcwd()}")
 else:
-    # Configuration locale (chemins absolus)
+    # Configuration locale
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    template_path = os.path.join(BASE_DIR, 'templates')
+    static_path = os.path.join(BASE_DIR, 'static')
+    
     app = Flask(
         __name__,
-        template_folder=os.path.join(BASE_DIR, 'templates'),
-        static_folder=os.path.join(BASE_DIR, 'static'),
+        template_folder=template_path,
+        static_folder=static_path,
         static_url_path="/static"
     )
+    
     print("✅ Mode local activé")
     print(f"BASE_DIR: {BASE_DIR}")
-    print(f"Templates folder: {app.template_folder}")
-    print(f"Static folder: {app.static_folder}")
+    print(f"Templates folder: {template_path}")
+    print(f"Static folder: {static_path}")
 
 # Initialiser Supabase
 supabase_url = os.getenv('SUPABASE_URL')
@@ -56,6 +66,7 @@ else:
 supabase = None
 if supabase_url and supabase_key:
     try:
+        # CORRECTION SUPABASE : créer le client sans paramètres problématiques
         supabase = create_client(supabase_url, supabase_key)
         print("✅ Supabase connecté avec succès")
         
@@ -68,6 +79,7 @@ if supabase_url and supabase_key:
             print(f"⚠️  Attention: Connexion établie mais erreur de test: {test_error}")
     except Exception as e:
         print(f"❌ Erreur initialisation Supabase: {e}")
+        print(f"⚠️  Utilisation du mode fallback JSON")
         supabase = None
 else:
     print("⚠️  Supabase non configuré - Mode fallback JSON")
@@ -96,6 +108,7 @@ def load_products():
             products_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'products.json')
         
         print(f"📁 Fallback: chargement depuis {products_file}")
+        print(f"📁 Fichier existe: {os.path.exists(products_file)}")
         
         if not os.path.exists(products_file):
             print(f"❌ Fichier {products_file} non trouvé")
@@ -129,79 +142,112 @@ def load_products():
             return products
     except Exception as e:
         print(f"❌ Erreur chargement products.json: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 # Route pour la page d'accueil
 @app.route('/')
 def index():
-    products = load_products()
-    return render_template('index.html', products=products)
+    try:
+        products = load_products()
+        return render_template('index.html', products=products)
+    except Exception as e:
+        print(f"❌ Erreur dans route /: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"Erreur: {str(e)}", 500
 
 # Route pour la page détail d'un produit
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
-    products = load_products()
-    product = next((p for p in products if p['id'] == product_id), None)
-    if product:
-        return render_template('product_detail.html', product=product)
-    return "Produit non trouvé", 404
+    try:
+        products = load_products()
+        product = next((p for p in products if p['id'] == product_id), None)
+        if product:
+            return render_template('product_detail.html', product=product)
+        return "Produit non trouvé", 404
+    except Exception as e:
+        print(f"❌ Erreur dans route /product/{product_id}: {e}")
+        return f"Erreur: {str(e)}", 500
 
 # Route pour la page À propos
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    try:
+        return render_template('about.html')
+    except Exception as e:
+        print(f"❌ Erreur dans route /about: {e}")
+        return f"Erreur: {str(e)}", 500
 
 # API pour obtenir tous les produits
 @app.route('/api/products')
 def get_products():
-    products = load_products()
-    return jsonify(products)
+    try:
+        products = load_products()
+        return jsonify(products)
+    except Exception as e:
+        print(f"❌ Erreur dans API /api/products: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # API pour obtenir un produit spécifique
 @app.route('/api/product/<int:product_id>')
 def get_product(product_id):
-    products = load_products()
-    product = next((p for p in products if p['id'] == product_id), None)
-    if product:
-        return jsonify(product)
-    return jsonify({'error': 'Produit non trouvé'}), 404
+    try:
+        products = load_products()
+        product = next((p for p in products if p['id'] == product_id), None)
+        if product:
+            return jsonify(product)
+        return jsonify({'error': 'Produit non trouvé'}), 404
+    except Exception as e:
+        print(f"❌ Erreur dans API /api/product/{product_id}: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # Générer le lien WhatsApp
 @app.route('/api/whatsapp-link', methods=['POST'])
 def whatsapp_link():
-    data = request.json
-    phone = "221764536464"
-    
-    message = "Bonjour, je voudrais commander:\n\n"
-    total = 0
-    
-    for item in data.get('items', []):
-        product_id = item['id']
-        quantity = item['quantity']
-        products = load_products()
-        product = next((p for p in products if p['id'] == product_id), None)
+    try:
+        data = request.json
+        phone = "221764536464"  # Format international sans +
         
-        if product:
-            price = product['price'] * quantity
-            total += price
-            message += f"- {product['name']} x{quantity} = {price} FCFA\n"
-            img = product.get('image', '')
-            if img:
-                if img.startswith('http'):
-                    img_url = img
-                else:
-                    try:
-                        img_url = url_for('static', filename=img, _external=True)
-                    except Exception:
-                        img_url = request.host_url.rstrip('/') + '/' + img.lstrip('/')
-                message += f"Image: {img_url}\n"
-    
-    message += f"\nTotal: {total} FCFA"
-    
-    # Générer l'URL WhatsApp (CORRIGÉ: pas d'espaces)
-    whatsapp_url = f"https://wa.me/{phone}?text={quote(message)}"
-    
-    return jsonify({'url': whatsapp_url})
+        message = "Bonjour, je voudrais commander:\n\n"
+        total = 0
+        
+        for item in data.get('items', []):
+            product_id = item['id']
+            quantity = item['quantity']
+            products = load_products()
+            product = next((p for p in products if p['id'] == product_id), None)
+            
+            if product:
+                price = product['price'] * quantity
+                total += price
+                message += f"- {product['name']} x{quantity} = {price} FCFA\n"
+                img = product.get('image', '')
+                if img:
+                    if img.startswith('http'):
+                        img_url = img
+                    else:
+                        try:
+                            img_url = url_for('static', filename=img, _external=True)
+                        except Exception:
+                            img_url = request.host_url.rstrip('/') + '/' + img.lstrip('/')
+                    message += f"Image: {img_url}\n"
+        
+        message += f"\nTotal: {total} FCFA"
+        
+        # CORRECTION : Pas d'espaces dans l'URL WhatsApp
+        whatsapp_url = f"https://wa.me/{phone}?text={quote(message)}"
+        
+        return jsonify({'url': whatsapp_url})
+    except Exception as e:
+        print(f"❌ Erreur dans API /api/whatsapp-link: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Route de santé pour Vercel
+@app.route('/_health')
+def health():
+    return jsonify({'status': 'ok'}), 200
 
 if __name__ == '__main__':
     print("\n" + "="*60)
