@@ -3,93 +3,106 @@ import json
 from urllib.parse import quote
 from supabase import create_client, Client
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Détection de l'environnement Vercel
+IS_VERCEL = os.environ.get("VERCEL") is not None
 
-# Chemin absolu du dossier backend (là où se trouve app.py)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if IS_VERCEL:
+    # Configuration pour Vercel (chemins relatifs)
+    app = Flask(
+        __name__,
+        template_folder="templates",
+        static_folder="static",
+        static_url_path="/static"
+    )
+    print("Mode Vercel activé")
+    print(f"Templates folder: {app.template_folder}")
+    print(f"Static folder: {app.static_folder}")
+else:
+    # Configuration locale (chemins absolus)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(BASE_DIR, 'templates'),
+        static_folder=os.path.join(BASE_DIR, 'static'),
+        static_url_path="/static"
+    )
+    print("Mode local activé")
+    print(f"BASE_DIR: {BASE_DIR}")
+    print(f"Templates folder: {app.template_folder}")
+    print(f"Static folder: {app.static_folder}")
 
-# Chemins explicites pour templates et static
-TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
-
-# Debug: afficher les chemins utilisés
-print(f"BASE_DIR: {BASE_DIR}")
-print(f"TEMPLATES_DIR: {TEMPLATES_DIR} {'[EXISTE]' if os.path.exists(TEMPLATES_DIR) else '[MANQUANT]'}")
-print(f"STATIC_DIR: {STATIC_DIR} {'[EXISTE]' if os.path.exists(STATIC_DIR) else '[MANQUANT]'}")
-
-# Création de l'application avec chemins absolus
-app = Flask(
-    __name__,
-    template_folder=TEMPLATES_DIR,
-    static_folder=STATIC_DIR,
-    static_url_path='/static'
-)
-
-# Initialiser le client Supabase avec logs détaillés
+# Initialiser Supabase
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_ANON_KEY')
 
 print(f"\n--- Configuration Supabase ---")
-print(f"SUPABASE_URL: {supabase_url}")
-print(f"SUPABASE_ANON_KEY: {supabase_key[:10] + '...' if supabase_key else 'None'}")
+if supabase_url:
+    print(f"SUPABASE_URL: {supabase_url}")
+else:
+    print("SUPABASE_URL: NON DEFINI")
+
+if supabase_key:
+    print(f"SUPABASE_ANON_KEY: {supabase_key[:10]}...")
+else:
+    print("SUPABASE_ANON_KEY: NON DEFINI")
 
 supabase = None
 if supabase_url and supabase_key:
     try:
         supabase = create_client(supabase_url, supabase_key)
-        print("✅ Supabase connecté avec succès")
+        print("Supabase connecté avec succès")
         
-        # Tester la connexion en lisant une table
+        # Tester la connexion
         try:
             test_response = supabase.table('products').select('id').limit(1).execute()
-            print(f"✅ Test connexion Supabase réussi - {len(test_response.data)} produit(s) trouvé(s)")
+            if hasattr(test_response, 'data'):
+                print(f"Test Supabase OK - {len(test_response.data)} produit(s) trouvé(s)")
         except Exception as test_error:
-            print(f"⚠️  Connexion Supabase établie mais erreur lors du test: {test_error}")
+            print(f"Attention: Connexion établie mais erreur de test: {test_error}")
     except Exception as e:
-        print(f"❌ Erreur initialisation Supabase: {e}")
+        print(f"Erreur initialisation Supabase: {e}")
         supabase = None
 else:
-    print("⚠️  Supabase credentials non définis (vérifie .env)")
-    print("⚠️  Mode fallback JSON activé")
+    print("Supabase non configuré - Mode fallback JSON")
 
-# Charger les produits depuis Supabase ou JSON (fallback)
+# Charger les produits depuis Supabase ou JSON
 def load_products():
     # Essayer Supabase en premier
     if supabase is not None:
         try:
             response = supabase.table('products').select('*').execute()
             if response and hasattr(response, 'data') and response.data:
-                print(f"📦 Chargement {len(response.data)} produits depuis Supabase")
+                print(f"Chargement {len(response.data)} produits depuis Supabase")
                 return response.data
             else:
-                print("⚠️  Supabase: réponse vide ou invalide")
+                print("Supabase: réponse vide ou invalide")
         except Exception as e:
-            print(f"❌ Erreur lecture Supabase: {e}")
+            print(f"Erreur lecture Supabase: {e}")
     
     # Fallback: charger depuis JSON
     try:
-        products_file = os.path.join(BASE_DIR, 'products.json')
-        print(f"📁 Fallback: chargement depuis {products_file}")
+        if IS_VERCEL:
+            products_file = "products.json"
+        else:
+            products_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'products.json')
+        
+        print(f"Fallback: chargement depuis {products_file}")
         
         if not os.path.exists(products_file):
-            print(f"⚠️  Fichier {products_file} non trouvé, création d'un fichier vide")
-            empty_products = []
-            with open(products_file, 'w', encoding='utf-8') as f:
-                json.dump(empty_products, f, indent=2)
-            return empty_products
+            print(f"Fichier {products_file} non trouvé")
+            return []
         
         with open(products_file, 'r', encoding='utf-8') as f:
             products = json.load(f)
-            print(f"📦 Chargement {len(products)} produits depuis JSON")
+            print(f"Chargement {len(products)} produits depuis JSON")
             
             # Si Supabase est disponible mais vide, importer les produits JSON
             if supabase is not None:
                 try:
                     existing = supabase.table('products').select('*').execute()
                     if not (existing and hasattr(existing, 'data') and existing.data):
-                        print("📤 Importation des produits JSON vers Supabase...")
+                        print("Importation des produits JSON vers Supabase...")
                         for product in products:
                             try:
                                 supabase.table('products').insert({
@@ -100,14 +113,14 @@ def load_products():
                                     'category': product['category']
                                 }).execute()
                             except Exception as ie:
-                                print(f"❌ Erreur insertion produit '{product.get('name')}': {ie}")
-                        print("✅ Importation terminée")
+                                print(f"Erreur insertion produit '{product.get('name')}': {ie}")
+                        print("Importation terminée")
                 except Exception as e:
-                    print(f"❌ Erreur vérification/import Supabase: {e}")
+                    print(f"Erreur vérification/import Supabase: {e}")
             
             return products
     except Exception as e:
-        print(f"❌ Erreur chargement products.json: {e}")
+        print(f"Erreur chargement products.json: {e}")
         return []
 
 # Route pour la page d'accueil
@@ -125,6 +138,7 @@ def product_detail(product_id):
         return render_template('product_detail.html', product=product)
     return "Produit non trouvé", 404
 
+# Route pour la page À propos
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -176,7 +190,7 @@ def whatsapp_link():
     
     message += f"\nTotal: {total} FCFA"
     
-    # Correction: pas d'espaces dans l'URL WhatsApp
+    # Générer l'URL WhatsApp
     whatsapp_url = f"https://wa.me/{phone}?text={quote(message)}"
     
     return jsonify({'url': whatsapp_url})
@@ -184,26 +198,5 @@ def whatsapp_link():
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("Lancement de l'application Flask")
-    print(f"Dossier de travail: {os.getcwd()}")
-    print(f"Fichier app.py: {__file__}")
-    print(f"Templates folder: {app.template_folder}")
-    print(f"Static folder: {app.static_folder}")
-    print("="*60 + "\n")
+    print("="*60)
     app.run(debug=True, port=5000)
-# backend/app.py
-if os.environ.get("VERCEL"):
-    # Configuration spécifique pour Vercel
-    app = Flask(
-        __name__,
-        template_folder="templates",
-        static_folder="static",
-        static_url_path="/static"
-    )
-else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(BASE_DIR, 'templates'),
-        static_folder=os.path.join(BASE_DIR, 'static'),
-        static_url_path="/static"
-    )
