@@ -219,7 +219,7 @@ def get_product(product_id):
 def whatsapp_link():
     try:
         data = request.json
-        phone = "212716639486"
+        phone = "212716639486"  # Numéro WhatsApp corrigé
         
         message = "Bonjour, je voudrais commander:\n\n"
         total = 0
@@ -247,7 +247,7 @@ def whatsapp_link():
         
         message += f"\nTotal: {total} FCFA"
         
-        # CORRECTION : Suppression des espaces
+        # CORRECTION : Suppression des espaces après wa.me/
         whatsapp_url = f"https://wa.me/{phone}?text={quote(message)}"
         
         return jsonify({'url': whatsapp_url})
